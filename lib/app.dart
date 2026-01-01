@@ -29,7 +29,7 @@ class _FirebaseCrudState extends State<FirebaseCrud> {
       ),
       darkTheme: ThemeData(
         colorScheme: ColorScheme.dark(
-          primary: Colors.teal,
+          primary: Colors.blueGrey.shade900,
           surface: Colors.black,
         ),
         listTileTheme: ListTileThemeData(
