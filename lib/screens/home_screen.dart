@@ -248,11 +248,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   title: Text("${match.team1} vs ${match.team2}"),
                   subtitle: Text(
-                    "Winner : ${match.isRunning
-                        ? "pending"
-                        : (match.team1Score > match.team2Score)
-                        ? match.team1
-                        : match.team2}",
+                    "Winner : ${match.winner}",
                   ),
 
                   trailing: Text(
@@ -274,6 +270,7 @@ class _HomeScreenState extends State<HomeScreen> {
   //---------------------------create and update match-------------------
   void _matchDialog({bool update = false, MatchModel? match}) {
     bool isRunning = true;
+
     if (update) {
       _team1Controller.text = match!.team1;
       _team2Controller.text = match.team2;
@@ -285,7 +282,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _team2Controller.clear();
       _team1ScoreController.clear();
       _team2ScoreController.clear();
-      isRunning = true;
+      isRunning = isRunning;
     }
 
     showDialog(
@@ -301,7 +298,19 @@ class _HomeScreenState extends State<HomeScreen> {
               team1Score: int.parse(_team1ScoreController.text),
               team2Score: int.parse(_team2ScoreController.text),
               isRunning: isRunning,
-              winner: "",
+              winner: update
+                  ? isRunning
+                        ? "pending"
+                        : (int.parse(_team1ScoreController.text) >
+                                  int.parse(_team2ScoreController.text)
+                              ? _team1Controller.text
+                              : _team2Controller.text)
+                  : isRunning
+                  ? "pending"
+                  : (int.parse(_team1ScoreController.text) >
+                            int.parse(_team2ScoreController.text)
+                        ? _team1Controller.text
+                        : _team2Controller.text),
               team1: _team1Controller.text,
             );
             try {
