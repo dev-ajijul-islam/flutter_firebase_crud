@@ -21,7 +21,16 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _team1ScoreController = TextEditingController();
   final TextEditingController _team2ScoreController = TextEditingController();
 
-  bool isCreating = false;
+  bool isLoading = false;
+
+  @override
+  void dispose() {
+    _team1Controller.dispose();
+    _team2Controller.dispose();
+    _team1ScoreController.dispose();
+    _team2ScoreController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,13 +47,17 @@ class _HomeScreenState extends State<HomeScreen> {
               setState(() {});
               widget.onThemeChanged();
             },
-            activeTrackColor: Colors.grey.shade900,
+            activeTrackColor: Colors.greenAccent,
+            inactiveTrackColor: Colors.black,
+            inactiveThumbColor: Colors.greenAccent,
           ),
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton(
-        onPressed: _createMatchDialog,
+        onPressed: () {
+          _matchDialog(update: false);
+        },
         child: Icon(Icons.add),
       ),
       body: StreamBuilder(
@@ -64,6 +77,71 @@ class _HomeScreenState extends State<HomeScreen> {
                   asyncSnapshot.data!.docs[index].data(),
                 );
                 return ListTile(
+                  onLongPress: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => Stack(
+                        children: [
+                          AlertDialog(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: .circular(10),
+                            ),
+                            title: Column(
+                              children: [
+                                Icon(
+                                  Icons.warning_amber_outlined,
+                                  size: 80,
+                                  color: Colors.orange,
+                                ),
+                                Text(
+                                  "Choose Action",
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                            content: Row(
+                              mainAxisAlignment: .spaceBetween,
+                              children: [
+                                FilledButton(
+                                  onPressed: () {
+                                    _matchDialog(update: true, match: match);
+                                  },
+                                  child: Row(
+                                    spacing: 5,
+                                    children: [
+                                      Icon(Icons.edit),
+                                      Text("Update"),
+                                    ],
+                                  ),
+                                ),
+                                FilledButton(
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: Colors.red,
+                                  ),
+                                  onPressed: () {},
+                                  child: Row(
+                                    spacing: 5,
+                                    children: [
+                                      Icon(Icons.delete),
+                                      Text("Delete"),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Positioned(
+                            top: MediaQuery.of(context).size.height / 2 - 115,
+                            right: MediaQuery.of(context).size.width / 2 - 130,
+                            child: IconButton(
+                              onPressed: () => Navigator.pop(context),
+                              icon: Icon(Icons.close),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                   leading: CircleAvatar(
                     radius: 5,
                     backgroundColor: match.isRunning
@@ -82,7 +160,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 );
               },
-              separatorBuilder: (context, index) => Divider(),
+              separatorBuilder: (context, index) => SizedBox(height: 10),
               itemCount: asyncSnapshot.data!.docs.length,
             );
           }
@@ -92,15 +170,28 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _createMatchDialog() {
+  void _matchDialog({bool update = false, MatchModel? match}) {
+    if (update) {
+      _team1Controller.text = match!.team1;
+      _team2Controller.text = match.team2;
+      _team1ScoreController.text = match.team1Score.toString();
+      _team2ScoreController.text = match.team2Score.toString();
+    } else {
+      _team1Controller.clear();
+      _team2Controller.clear();
+      _team1ScoreController.clear();
+      _team2ScoreController.clear();
+    }
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
-          Future<void> createMatch() async {
-            isCreating = true;
+          // ----------------- create match ---------------
+          Future<void> createOrUpdateMatch() async {
+            isLoading = true;
+
             setState(() {});
-            final match = MatchModel(
+            final matchData = MatchModel(
               team2: _team2Controller.text,
               team1Score: int.parse(_team1ScoreController.text),
               team2Score: int.parse(_team2ScoreController.text),
@@ -109,12 +200,22 @@ class _HomeScreenState extends State<HomeScreen> {
               team1: _team1Controller.text,
             );
             try {
-              await _firestore.collection("football").doc().set(match.toJson());
+              await _firestore
+                  .collection("football")
+                  .doc()
+                  .set(matchData.toJson());
               debugPrint("Match created successfully");
+
+              Navigator.pop(context);
+
+              _team1Controller.clear();
+              _team2Controller.clear();
+              _team1ScoreController.clear();
+              _team2ScoreController.clear();
             } catch (e) {
               debugPrint("Create match failed");
             } finally {
-              isCreating = false;
+              isLoading = false;
               setState(() {});
             }
           }
@@ -123,7 +224,7 @@ class _HomeScreenState extends State<HomeScreen> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
-            title: Text("Create match"),
+            title: Text("${update ? "Update" : "Create"} match"),
 
             content: Form(
               key: _formKey,
@@ -189,10 +290,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         onPressed: () {
                           if (_formKey.currentState!.validate()) {
-                            createMatch();
+                            createOrUpdateMatch();
                           }
                         },
-                        child: isCreating
+                        child: isLoading
                             ? Center(
                                 child: SizedBox(
                                   width: 16,
@@ -202,7 +303,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 ),
                               )
-                            : Text("Create Match"),
+                            : Text("${update ? "Update" : "Create"} Match"),
                       ),
                     ),
                   ],

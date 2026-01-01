@@ -20,14 +20,24 @@ class _FirebaseCrudState extends State<FirebaseCrud> {
           primary: Colors.teal,
           surface: Colors.grey.shade100,
         ),
-        listTileTheme: ListTileThemeData(tileColor: Colors.white),
+        listTileTheme: ListTileThemeData(
+          tileColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
       ),
       darkTheme: ThemeData(
         colorScheme: ColorScheme.dark(
           primary: Colors.teal,
           surface: Colors.black,
         ),
-        listTileTheme: ListTileThemeData(tileColor: Colors.white12),
+        listTileTheme: ListTileThemeData(
+          tileColor: Colors.white12,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
       ),
       debugShowCheckedModeBanner: false,
       home: HomeScreen(onThemeChanged: () => setState(() {})),
