@@ -14,11 +14,20 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  final TextEditingController _team1Controller = TextEditingController();
+  final TextEditingController _team2Controller = TextEditingController();
+  final TextEditingController _team1ScoreController = TextEditingController();
+  final TextEditingController _team2ScoreController = TextEditingController();
+
+  bool isCreating = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.teal,
+        backgroundColor: ColorScheme.of(context).primary,
         foregroundColor: Colors.white,
         title: Text("Firebase crud"),
         actions: [
@@ -86,33 +95,122 @@ class _HomeScreenState extends State<HomeScreen> {
   void _createMatchDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        title: Text("Create match"),
-        content: Form(
-          child: Column(
-            spacing: 10,
-            mainAxisSize: .min,
-            children: [
-              TextFormField(decoration: InputDecoration(hintText: "Team 1")),
-              TextFormField(decoration: InputDecoration(hintText: "Team 1")),
-              TextFormField(decoration: InputDecoration(hintText: "Team 1")),
-              TextFormField(decoration: InputDecoration(hintText: "Team 1")),
-              SizedBox(height: 10),
-              SizedBox(
-                width: MediaQuery.of(context).size.width,
-                child: FilledButton(
-                  style: FilledButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: .circular(10)),
-                    minimumSize: Size(MediaQuery.of(context).size.width, 50),
-                  ),
-                  onPressed: () {},
-                  child: Text("Create Match"),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          Future<void> createMatch() async {
+            isCreating = true;
+            setState(() {});
+            final match = MatchModel(
+              team2: _team2Controller.text,
+              team1Score: int.parse(_team1ScoreController.text),
+              team2Score: int.parse(_team2ScoreController.text),
+              isRunning: true,
+              winner: "",
+              team1: _team1Controller.text,
+            );
+            try {
+              await _firestore.collection("football").doc().set(match.toJson());
+              debugPrint("Match created successfully");
+            } catch (e) {
+              debugPrint("Create match failed");
+            } finally {
+              isCreating = false;
+              setState(() {});
+            }
+          }
+
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            title: Text("Create match"),
+
+            content: Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  spacing: 10,
+                  mainAxisSize: .min,
+                  children: [
+                    TextFormField(
+                      controller: _team1Controller,
+                      validator: (value) {
+                        if (value!.isEmpty) {
+                          return 'Enter Team 1 name';
+                        }
+                        return null;
+                      },
+                      decoration: InputDecoration(hintText: "Team 1 name"),
+                    ),
+                    TextFormField(
+                      controller: _team2Controller,
+                      validator: (value) {
+                        if (value!.isEmpty) {
+                          return 'Enter Team 2 name';
+                        }
+                        return null;
+                      },
+                      decoration: InputDecoration(hintText: "Team 2 name"),
+                    ),
+                    TextFormField(
+                      keyboardType: TextInputType.number,
+                      controller: _team1ScoreController,
+                      validator: (value) {
+                        if (value!.isEmpty) {
+                          return 'Enter Team 1 score';
+                        }
+                        return null;
+                      },
+                      decoration: InputDecoration(hintText: "Team 1 score"),
+                    ),
+                    TextFormField(
+                      controller: _team2ScoreController,
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value!.isEmpty) {
+                          return 'Enter Team 2 score';
+                        }
+                        return null;
+                      },
+                      decoration: InputDecoration(hintText: "Team 2 score"),
+                    ),
+                    SizedBox(height: 10),
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width,
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: .circular(10),
+                          ),
+                          minimumSize: Size(
+                            MediaQuery.of(context).size.width,
+                            50,
+                          ),
+                        ),
+                        onPressed: () {
+                          if (_formKey.currentState!.validate()) {
+                            createMatch();
+                          }
+                        },
+                        child: isCreating
+                            ? Center(
+                                child: SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              )
+                            : Text("Create Match"),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }

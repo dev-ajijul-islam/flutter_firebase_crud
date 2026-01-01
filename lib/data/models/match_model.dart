@@ -25,4 +25,15 @@ class MatchModel {
       team1: json["team_1"],
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "team_2": team2,
+      "team_1_score": team1Score,
+      "team_2_score": team2Score,
+      "isRunning": isRunning,
+      "winner_team": winner,
+      "team_1": team1,
+    };
+  }
 }
