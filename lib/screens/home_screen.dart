@@ -248,9 +248,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   title: Text("${match.team1} vs ${match.team2}"),
                   subtitle: Text(
-                    (!match.isRunning && match.team1Score > match.team2Score)
+                    "Winner : ${match.isRunning
+                        ? "pending"
+                        : (match.team1Score > match.team2Score)
                         ? match.team1
-                        : match.team2,
+                        : match.team2}",
                   ),
 
                   trailing: Text(
@@ -285,8 +287,6 @@ class _HomeScreenState extends State<HomeScreen> {
       _team2ScoreController.clear();
       isRunning = true;
     }
-
-
 
     showDialog(
       context: context,
