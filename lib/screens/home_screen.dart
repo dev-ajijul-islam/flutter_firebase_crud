@@ -22,6 +22,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _team2ScoreController = TextEditingController();
 
   bool isLoading = false;
+  bool isDeleting = false;
 
   @override
   void dispose() {
@@ -105,6 +106,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               children: [
                                 FilledButton(
                                   onPressed: () {
+                                    Navigator.pop(context);
                                     _matchDialog(update: true, match: match);
                                   },
                                   child: Row(
@@ -119,7 +121,102 @@ class _HomeScreenState extends State<HomeScreen> {
                                   style: FilledButton.styleFrom(
                                     backgroundColor: Colors.red,
                                   ),
-                                  onPressed: () {},
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) {
+                                        return StatefulBuilder(
+                                          builder: (context, setState) {
+                                            ///--------------------delete match-------------
+                                            Future<void> deleteMatch() async {
+                                              isDeleting = true;
+                                              setState(() {});
+                                              try {
+                                                await _firestore
+                                                    .collection("football")
+                                                    .doc((match.id))
+                                                    .delete();
+                                              } catch (e) {
+                                                debugPrint(
+                                                  "delete match failed $e",
+                                                );
+                                              } finally {
+                                                isDeleting = false;
+                                              }
+                                            }
+
+                                            return AlertDialog(
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: .circular(10),
+                                              ),
+                                              title: Column(
+                                                mainAxisSize: .min,
+                                                children: [
+                                                  Icon(
+                                                    Icons
+                                                        .warning_amber_outlined,
+                                                    size: 80,
+                                                    color: Colors.orange,
+                                                  ),
+                                                  Text(
+                                                    "Delete match",
+                                                    textAlign: TextAlign.center,
+                                                  ),
+                                                ],
+                                              ),
+                                              content: Row(
+                                                mainAxisAlignment:
+                                                    .spaceBetween,
+                                                children: [
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      Navigator.pop(context);
+                                                    },
+                                                    child: Row(
+                                                      spacing: 5,
+                                                      children: [
+                                                        Icon(Icons.close),
+                                                        Text("Cancel"),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  FilledButton(
+                                                    style:
+                                                        FilledButton.styleFrom(
+                                                          backgroundColor:
+                                                              Colors.red,
+                                                        ),
+                                                    onPressed: () {
+                                                      deleteMatch();
+                                                      Navigator.pop(context);
+                                                    },
+                                                    child: Row(
+                                                      mainAxisSize: .min,
+                                                      spacing: 5,
+                                                      children: [
+                                                        Icon(Icons.delete),
+                                                        isDeleting
+                                                            ? SizedBox(
+                                                                width: 16,
+                                                                height: 16,
+                                                                child: CircularProgressIndicator(
+                                                                  color: Colors
+                                                                      .white,
+                                                                ),
+                                                              )
+                                                            : Text("Confirm"),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          },
+                                        );
+                                      },
+                                    );
+                                  },
                                   child: Row(
                                     spacing: 5,
                                     children: [
@@ -155,6 +252,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ? match.team1
                         : match.team2,
                   ),
+
                   trailing: Text(
                     "${match.team1Score} : ${match.team2Score}",
                     style: TextTheme.of(context).titleMedium,
@@ -171,23 +269,29 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  //---------------------------create and update match-------------------
   void _matchDialog({bool update = false, MatchModel? match}) {
+    bool isRunning = true;
     if (update) {
       _team1Controller.text = match!.team1;
       _team2Controller.text = match.team2;
       _team1ScoreController.text = match.team1Score.toString();
       _team2ScoreController.text = match.team2Score.toString();
+      isRunning = match.isRunning;
     } else {
       _team1Controller.clear();
       _team2Controller.clear();
       _team1ScoreController.clear();
       _team2ScoreController.clear();
+      isRunning = true;
     }
+
+
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
-          // ----------------- create match ---------------
           Future<void> createOrUpdateMatch() async {
             isLoading = true;
 
@@ -196,7 +300,7 @@ class _HomeScreenState extends State<HomeScreen> {
               team2: _team2Controller.text,
               team1Score: int.parse(_team1ScoreController.text),
               team2Score: int.parse(_team2ScoreController.text),
-              isRunning: true,
+              isRunning: isRunning,
               winner: "",
               team1: _team1Controller.text,
             );
@@ -284,6 +388,33 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                       decoration: InputDecoration(hintText: "Team 2 score"),
                     ),
+                    DropdownMenu<bool>(
+                      onSelected: (value) => isRunning = value!,
+                      width: double.infinity,
+                      initialSelection: isRunning,
+                      menuStyle: const MenuStyle(
+                        side: WidgetStatePropertyAll(BorderSide.none),
+                        minimumSize: WidgetStatePropertyAll(
+                          Size(double.infinity, 56),
+                        ),
+                      ),
+                      inputDecorationTheme: const InputDecorationTheme(
+                        border: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.grey),
+                        ),
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.grey),
+                        ),
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.blue, width: 2),
+                        ),
+                      ),
+                      dropdownMenuEntries: const [
+                        DropdownMenuEntry(value: true, label: "Running"),
+                        DropdownMenuEntry(value: false, label: "Finished"),
+                      ],
+                    ),
+
                     SizedBox(height: 10),
                     SizedBox(
                       width: MediaQuery.of(context).size.width,
