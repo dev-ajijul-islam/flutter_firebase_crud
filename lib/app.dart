@@ -1,11 +1,36 @@
 import 'package:firebase_crud_practice/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 
-class FirebaseCrud extends StatelessWidget {
+class FirebaseCrud extends StatefulWidget {
   const FirebaseCrud({super.key});
 
+  static bool isLight = true;
+
+  @override
+  State<FirebaseCrud> createState() => _FirebaseCrudState();
+}
+
+class _FirebaseCrudState extends State<FirebaseCrud> {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(debugShowCheckedModeBanner: false, home: HomeScreen());
+    return MaterialApp(
+      themeMode: FirebaseCrud.isLight ? ThemeMode.light : ThemeMode.dark,
+      theme: ThemeData(
+        colorScheme: ColorScheme.light(
+          primary: Colors.teal,
+          surface: Colors.grey.shade100,
+        ),
+        listTileTheme: ListTileThemeData(tileColor: Colors.white),
+      ),
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.dark(
+          primary: Colors.teal,
+          surface: Colors.black,
+        ),
+        listTileTheme: ListTileThemeData(tileColor: Colors.white12),
+      ),
+      debugShowCheckedModeBanner: false,
+      home: HomeScreen(onThemeChanged: () => setState(() {})),
+    );
   }
 }
