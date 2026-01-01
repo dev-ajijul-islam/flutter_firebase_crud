@@ -73,9 +73,10 @@ class _HomeScreenState extends State<HomeScreen> {
             return ListView.separated(
               padding: .all(20),
               itemBuilder: (context, index) {
-                final match = MatchModel.fromJson(
-                  asyncSnapshot.data!.docs[index].data(),
-                );
+                final match = MatchModel.fromJson({
+                  "id": asyncSnapshot.data?.docs[index].id,
+                  ...asyncSnapshot.data!.docs[index].data(),
+                });
                 return ListTile(
                   onLongPress: () {
                     showDialog(
@@ -200,10 +201,18 @@ class _HomeScreenState extends State<HomeScreen> {
               team1: _team1Controller.text,
             );
             try {
-              await _firestore
-                  .collection("football")
-                  .doc()
-                  .set(matchData.toJson());
+              if (update) {
+                await _firestore
+                    .collection("football")
+                    .doc((match?.id))
+                    .update(matchData.toJson());
+              } else {
+                await _firestore
+                    .collection("football")
+                    .doc()
+                    .set(matchData.toJson());
+              }
+
               debugPrint("Match created successfully");
 
               Navigator.pop(context);

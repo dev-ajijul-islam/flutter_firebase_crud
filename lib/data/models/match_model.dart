@@ -1,4 +1,5 @@
 class MatchModel {
+  final String? id;
   final String team1;
   final String team2;
   final int team1Score;
@@ -7,6 +8,7 @@ class MatchModel {
   final String winner;
 
   MatchModel({
+    this.id,
     required this.team2,
     required this.team1Score,
     required this.team2Score,
@@ -17,6 +19,7 @@ class MatchModel {
 
   factory MatchModel.fromJson(Map<String, dynamic> json) {
     return MatchModel(
+      id: json["id"],
       team2: json["team_2"],
       team1Score: json["team_1_score"],
       team2Score: json["team_2_score"],
