@@ -247,9 +247,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         : Colors.red,
                   ),
                   title: Text("${match.team1} vs ${match.team2}"),
-                  subtitle: Text(
-                    "Winner : ${match.winner}",
-                  ),
+                  subtitle: Text("Winner : ${match.winner}"),
 
                   trailing: Text(
                     "${match.team1Score} : ${match.team2Score}",
