@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_crud_practice/app.dart';
 import 'package:firebase_crud_practice/data/models/match_model.dart';
 import 'package:flutter/material.dart';
@@ -25,6 +27,12 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isDeleting = false;
 
   @override
+  void initState() {
+    FirebaseCrashlytics.instance.log("Entering home screen");
+    super.initState();
+  }
+
+  @override
   void dispose() {
     _team1Controller.dispose();
     _team2Controller.dispose();
@@ -47,6 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
               FirebaseCrud.isLight = value;
               setState(() {});
               widget.onThemeChanged();
+              FirebaseAnalytics.instance.logEvent(name: "Theme Chnaged");
             },
             activeTrackColor: Colors.greenAccent,
             inactiveTrackColor: Colors.black,
@@ -61,12 +70,19 @@ class _HomeScreenState extends State<HomeScreen> {
           FloatingActionButton(
             onPressed: () {
               _matchDialog(update: false);
+              FirebaseAnalytics.instance.logEvent(name: "Match create fired");
             },
             child: Icon(Icons.add),
           ),
           FloatingActionButton(
             onPressed: () {
-              throw Exception();
+              FirebaseAnalytics.instance.logEvent(name: "Thrown error");
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text("Exception thrown for crashlytics test"),
+                ),
+              );
+              throw Exception("My Execution");
             },
             child: Icon(Icons.bug_report_outlined),
           ),
@@ -324,21 +340,22 @@ class _HomeScreenState extends State<HomeScreen> {
             );
             try {
               if (update) {
+                FirebaseAnalytics.instance.logEvent(
+                  name: "match ${match?.id} update fired",
+                );
                 await _firestore
                     .collection("football")
                     .doc((match?.id))
                     .update(matchData.toJson());
               } else {
-                await _firestore
-                    .collection("football")
-                    .doc()
-                    .set(matchData.toJson());
+                FirebaseAnalytics.instance.logEvent(
+                  name: "match ${match?.id} create fired",
+                );
+
+                await _firestore.collection("football").add(matchData.toJson());
               }
 
               debugPrint("Match created successfully");
-
-              Navigator.pop(context);
-
               _team1Controller.clear();
               _team2Controller.clear();
               _team1ScoreController.clear();

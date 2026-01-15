@@ -21,5 +21,8 @@ void main() async {
     return true;
   };
 
+  FirebaseCrashlytics.instance.log("userId 101");
+  FirebaseCrashlytics.instance.setCustomKey("UserId", "101");
+
   runApp(FirebaseCrud());
 }
