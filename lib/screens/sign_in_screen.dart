@@ -1,4 +1,6 @@
+import 'package:firebase_crud_practice/screens/home_screen.dart';
 import 'package:firebase_crud_practice/screens/sign_up_screen.dart';
+import 'package:firebase_crud_practice/services/auth_service.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
@@ -13,6 +15,8 @@ class _SignInScreenState extends State<SignInScreen> {
   final TextEditingController _emailTEController = .new();
   final TextEditingController _passwordTEController = .new();
 
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -20,6 +24,7 @@ class _SignInScreenState extends State<SignInScreen> {
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Form(
+            key: _formKey,
             child: Column(
               spacing: 10,
               mainAxisAlignment: .center,
@@ -63,8 +68,16 @@ class _SignInScreenState extends State<SignInScreen> {
                       Size(double.maxFinite, 50),
                     ),
                   ),
-                  onPressed: () {},
-                  child: Text("Sign In"),
+                  onPressed: AuthService.isLoading ? null : _onTapSignIn,
+                  child: AuthService.isLoading
+                      ? Center(
+                          child: SizedBox(
+                            width: 15,
+                            height: 15,
+                            child: CircularProgressIndicator(),
+                          ),
+                        )
+                      : Text("Sign In"),
                 ),
                 SizedBox(height: 10),
                 RichText(
@@ -94,5 +107,35 @@ class _SignInScreenState extends State<SignInScreen> {
         ),
       ),
     );
+  }
+
+  void _onTapSignIn() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {});
+      final success = await AuthService.signIn(
+        email: _emailTEController.text.trim(),
+        password: _passwordTEController.text.trim(),
+      );
+
+      setState(() {});
+      if (success) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HomeScreen(
+              onThemeChanged: () {
+                setState(() {});
+              },
+            ),
+          ),
+        );
+        _emailTEController.clear();
+        _passwordTEController.clear();
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("SignUp failed")));
+      }
+    }
   }
 }
