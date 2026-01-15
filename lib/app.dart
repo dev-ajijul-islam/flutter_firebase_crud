@@ -41,7 +41,11 @@ class _FirebaseCrudState extends State<FirebaseCrud> {
         ),
       ),
       debugShowCheckedModeBanner: false,
-      home: SignUpScreen(),
+      home: HomeScreen(
+        onThemeChanged: () {
+          setState(() {});
+        },
+      ),
     );
   }
 }

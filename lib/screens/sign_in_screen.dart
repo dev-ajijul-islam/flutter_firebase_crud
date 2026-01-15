@@ -119,7 +119,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
       setState(() {});
       if (success) {
-        Navigator.push(
+        Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
             builder: (context) => HomeScreen(
@@ -128,6 +128,7 @@ class _SignInScreenState extends State<SignInScreen> {
               },
             ),
           ),
+          (route) => false,
         );
         _emailTEController.clear();
         _passwordTEController.clear();

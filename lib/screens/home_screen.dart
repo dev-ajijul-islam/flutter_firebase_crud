@@ -1,8 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_crud_practice/app.dart';
 import 'package:firebase_crud_practice/data/models/match_model.dart';
+import 'package:firebase_crud_practice/screens/sign_in_screen.dart';
+import 'package:firebase_crud_practice/services/auth_service.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -47,7 +50,42 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         backgroundColor: ColorScheme.of(context).primary,
         foregroundColor: Colors.white,
-        title: Text("Firebase crud"),
+        title: StreamBuilder(
+          stream: FirebaseAuth.instance.authStateChanges(),
+          builder: (context, asyncSnapshot) {
+            final user = asyncSnapshot.data;
+            if (ConnectionState == AsyncSnapshot.waiting()) {
+              return SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(),
+              );
+            }
+            if (!asyncSnapshot.hasData) {
+              return Text("User not found");
+            }
+            return Row(
+              spacing: 10,
+              children: [
+                CircleAvatar(
+                  radius: 22,
+                  backgroundColor: Colors.grey,
+                  child: (user?.photoURL != null)
+                      ? Image.network(user!.photoURL.toString())
+                      : Icon(Icons.person),
+                ),
+                Column(
+                  crossAxisAlignment: .start,
+                  mainAxisAlignment: .start,
+                  children: [
+                    Text(user!.displayName.toString()),
+                    Text(user.email.toString(), style: TextStyle(fontSize: 14)),
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
         actions: [
           Switch(
             value: FirebaseCrud.isLight,
@@ -55,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
               FirebaseCrud.isLight = value;
               setState(() {});
               widget.onThemeChanged();
-              FirebaseAnalytics.instance.logEvent(name: "Theme Chnaged");
+              FirebaseAnalytics.instance.logEvent(name: "Theme Changed");
             },
             activeTrackColor: Colors.greenAccent,
             inactiveTrackColor: Colors.black,
