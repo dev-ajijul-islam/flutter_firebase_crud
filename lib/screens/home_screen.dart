@@ -6,6 +6,7 @@ import 'package:firebase_crud_practice/app.dart';
 import 'package:firebase_crud_practice/data/models/match_model.dart';
 import 'package:firebase_crud_practice/screens/sign_in_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback onThemeChanged;
@@ -28,6 +29,39 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isLoading = false;
   bool isDeleting = false;
 
+  BannerAd? _bannerAd;
+
+  /// Loads a banner ad.
+  void _loadAd() {
+    final bannerAd = BannerAd(
+      size: AdSize.getCurrentOrientationInlineAdaptiveBannerAdSize(
+        MediaQuery.sizeOf(context).width.truncate(),
+      ),
+      adUnitId: "ca-app-pub-3940256099942544/6300978111",
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        // Called when an ad is successfully received.
+        onAdLoaded: (ad) {
+          if (!mounted) {
+            ad.dispose();
+            return;
+          }
+          setState(() {
+            _bannerAd = ad as BannerAd;
+          });
+        },
+        // Called when an ad request failed.
+        onAdFailedToLoad: (ad, error) {
+          debugPrint('BannerAd failed to load: $error');
+          ad.dispose();
+        },
+      ),
+    );
+
+    // Start loading.
+    bannerAd.load();
+  }
+
   @override
   void initState() {
     FirebaseCrashlytics.instance.log("Entering home screen");
@@ -45,6 +79,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_bannerAd == null) {
+      _loadAd();
+    }
     return Scaffold(
       appBar: AppBar(
         backgroundColor: ColorScheme.of(context).primary,
@@ -146,192 +183,226 @@ class _HomeScreenState extends State<HomeScreen> {
             Center(child: Text(asyncSnapshot.error.toString()));
           }
           if (asyncSnapshot.hasData) {
-            return ListView.separated(
-              padding: .all(20),
-              itemBuilder: (context, index) {
-                final match = MatchModel.fromJson({
-                  "id": asyncSnapshot.data?.docs[index].id,
-                  ...asyncSnapshot.data!.docs[index].data(),
-                });
-                return ListTile(
-                  onLongPress: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => Stack(
-                        children: [
-                          AlertDialog(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: .circular(10),
-                            ),
-                            title: Column(
+            return Column(
+              children: [
+                if (_bannerAd != null)
+                  SizedBox(
+                    height: 100,
+                    width: .maxFinite,
+                    child: AdWidget(ad: _bannerAd!),
+                  ),
+                Expanded(
+                  child: ListView.separated(
+                    padding: .all(20),
+                    itemBuilder: (context, index) {
+                      final match = MatchModel.fromJson({
+                        "id": asyncSnapshot.data?.docs[index].id,
+                        ...asyncSnapshot.data!.docs[index].data(),
+                      });
+                      return ListTile(
+                        onLongPress: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => Stack(
                               children: [
-                                Icon(
-                                  Icons.warning_amber_outlined,
-                                  size: 80,
-                                  color: Colors.orange,
-                                ),
-                                Text(
-                                  "Choose Action",
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ),
-                            content: Row(
-                              mainAxisAlignment: .spaceBetween,
-                              children: [
-                                FilledButton(
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                    _matchDialog(update: true, match: match);
-                                  },
-                                  child: Row(
-                                    spacing: 5,
+                                AlertDialog(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: .circular(10),
+                                  ),
+                                  title: Column(
                                     children: [
-                                      Icon(Icons.edit),
-                                      Text("Update"),
+                                      Icon(
+                                        Icons.warning_amber_outlined,
+                                        size: 80,
+                                        color: Colors.orange,
+                                      ),
+                                      Text(
+                                        "Choose Action",
+                                        textAlign: TextAlign.center,
+                                      ),
                                     ],
                                   ),
-                                ),
-                                FilledButton(
-                                  style: FilledButton.styleFrom(
-                                    backgroundColor: Colors.red,
-                                  ),
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                    showDialog(
-                                      context: context,
-                                      builder: (context) {
-                                        return StatefulBuilder(
-                                          builder: (context, setState) {
-                                            ///--------------------delete match-------------
-                                            Future<void> deleteMatch() async {
-                                              isDeleting = true;
-                                              setState(() {});
-                                              try {
-                                                await _firestore
-                                                    .collection("football")
-                                                    .doc((match.id))
-                                                    .delete();
-                                              } catch (e) {
-                                                debugPrint(
-                                                  "delete match failed $e",
-                                                );
-                                              } finally {
-                                                isDeleting = false;
-                                              }
-                                            }
+                                  content: Row(
+                                    mainAxisAlignment: .spaceBetween,
+                                    children: [
+                                      FilledButton(
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                          _matchDialog(
+                                            update: true,
+                                            match: match,
+                                          );
+                                        },
+                                        child: Row(
+                                          spacing: 5,
+                                          children: [
+                                            Icon(Icons.edit),
+                                            Text("Update"),
+                                          ],
+                                        ),
+                                      ),
+                                      FilledButton(
+                                        style: FilledButton.styleFrom(
+                                          backgroundColor: Colors.red,
+                                        ),
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                          showDialog(
+                                            context: context,
+                                            builder: (context) {
+                                              return StatefulBuilder(
+                                                builder: (context, setState) {
+                                                  ///--------------------delete match-------------
+                                                  Future<void>
+                                                  deleteMatch() async {
+                                                    isDeleting = true;
+                                                    setState(() {});
+                                                    try {
+                                                      await _firestore
+                                                          .collection(
+                                                            "football",
+                                                          )
+                                                          .doc((match.id))
+                                                          .delete();
+                                                    } catch (e) {
+                                                      debugPrint(
+                                                        "delete match failed $e",
+                                                      );
+                                                    } finally {
+                                                      isDeleting = false;
+                                                    }
+                                                  }
 
-                                            return AlertDialog(
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: .circular(10),
-                                              ),
-                                              title: Column(
-                                                mainAxisSize: .min,
-                                                children: [
-                                                  Icon(
-                                                    Icons
-                                                        .warning_amber_outlined,
-                                                    size: 80,
-                                                    color: Colors.orange,
-                                                  ),
-                                                  Text(
-                                                    "Delete match",
-                                                    textAlign: TextAlign.center,
-                                                  ),
-                                                ],
-                                              ),
-                                              content: Row(
-                                                mainAxisAlignment:
-                                                    .spaceBetween,
-                                                children: [
-                                                  TextButton(
-                                                    onPressed: () {
-                                                      Navigator.pop(context);
-                                                    },
-                                                    child: Row(
-                                                      spacing: 5,
-                                                      children: [
-                                                        Icon(Icons.close),
-                                                        Text("Cancel"),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                  FilledButton(
-                                                    style:
-                                                        FilledButton.styleFrom(
-                                                          backgroundColor:
-                                                              Colors.red,
+                                                  return AlertDialog(
+                                                    shape:
+                                                        RoundedRectangleBorder(
+                                                          borderRadius:
+                                                              .circular(10),
                                                         ),
-                                                    onPressed: () {
-                                                      deleteMatch();
-                                                      Navigator.pop(context);
-                                                    },
-                                                    child: Row(
+                                                    title: Column(
                                                       mainAxisSize: .min,
-                                                      spacing: 5,
                                                       children: [
-                                                        Icon(Icons.delete),
-                                                        isDeleting
-                                                            ? SizedBox(
-                                                                width: 16,
-                                                                height: 16,
-                                                                child: CircularProgressIndicator(
-                                                                  color: Colors
-                                                                      .white,
-                                                                ),
-                                                              )
-                                                            : Text("Confirm"),
+                                                        Icon(
+                                                          Icons
+                                                              .warning_amber_outlined,
+                                                          size: 80,
+                                                          color: Colors.orange,
+                                                        ),
+                                                        Text(
+                                                          "Delete match",
+                                                          textAlign:
+                                                              TextAlign.center,
+                                                        ),
                                                       ],
                                                     ),
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                          },
-                                        );
-                                      },
-                                    );
-                                  },
-                                  child: Row(
-                                    spacing: 5,
-                                    children: [
-                                      Icon(Icons.delete),
-                                      Text("Delete"),
+                                                    content: Row(
+                                                      mainAxisAlignment:
+                                                          .spaceBetween,
+                                                      children: [
+                                                        TextButton(
+                                                          onPressed: () {
+                                                            Navigator.pop(
+                                                              context,
+                                                            );
+                                                          },
+                                                          child: Row(
+                                                            spacing: 5,
+                                                            children: [
+                                                              Icon(Icons.close),
+                                                              Text("Cancel"),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                        FilledButton(
+                                                          style:
+                                                              FilledButton.styleFrom(
+                                                                backgroundColor:
+                                                                    Colors.red,
+                                                              ),
+                                                          onPressed: () {
+                                                            deleteMatch();
+                                                            Navigator.pop(
+                                                              context,
+                                                            );
+                                                          },
+                                                          child: Row(
+                                                            mainAxisSize: .min,
+                                                            spacing: 5,
+                                                            children: [
+                                                              Icon(
+                                                                Icons.delete,
+                                                              ),
+                                                              isDeleting
+                                                                  ? SizedBox(
+                                                                      width: 16,
+                                                                      height:
+                                                                          16,
+                                                                      child: CircularProgressIndicator(
+                                                                        color: Colors
+                                                                            .white,
+                                                                      ),
+                                                                    )
+                                                                  : Text(
+                                                                      "Confirm",
+                                                                    ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                },
+                                              );
+                                            },
+                                          );
+                                        },
+                                        child: Row(
+                                          spacing: 5,
+                                          children: [
+                                            Icon(Icons.delete),
+                                            Text("Delete"),
+                                          ],
+                                        ),
+                                      ),
                                     ],
+                                  ),
+                                ),
+                                Positioned(
+                                  top:
+                                      MediaQuery.of(context).size.height / 2 -
+                                      115,
+                                  right:
+                                      MediaQuery.of(context).size.width / 2 -
+                                      130,
+                                  child: IconButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    icon: Icon(Icons.close),
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                          Positioned(
-                            top: MediaQuery.of(context).size.height / 2 - 115,
-                            right: MediaQuery.of(context).size.width / 2 - 130,
-                            child: IconButton(
-                              onPressed: () => Navigator.pop(context),
-                              icon: Icon(Icons.close),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                  leading: CircleAvatar(
-                    radius: 5,
-                    backgroundColor: match.isRunning
-                        ? Colors.green
-                        : Colors.red,
-                  ),
-                  title: Text("${match.team1} vs ${match.team2}"),
-                  subtitle: Text("Winner : ${match.winner}"),
+                          );
+                        },
+                        leading: CircleAvatar(
+                          radius: 5,
+                          backgroundColor: match.isRunning
+                              ? Colors.green
+                              : Colors.red,
+                        ),
+                        title: Text("${match.team1} vs ${match.team2}"),
+                        subtitle: Text("Winner : ${match.winner}"),
 
-                  trailing: Text(
-                    "${match.team1Score} : ${match.team2Score}",
-                    style: TextTheme.of(context).titleMedium,
+                        trailing: Text(
+                          "${match.team1Score} : ${match.team2Score}",
+                          style: TextTheme.of(context).titleMedium,
+                        ),
+                      );
+                    },
+                    separatorBuilder: (context, index) => SizedBox(height: 10),
+                    itemCount: asyncSnapshot.data!.docs.length,
                   ),
-                );
-              },
-              separatorBuilder: (context, index) => SizedBox(height: 10),
-              itemCount: asyncSnapshot.data!.docs.length,
+                ),
+              ],
             );
           }
           return SizedBox();
