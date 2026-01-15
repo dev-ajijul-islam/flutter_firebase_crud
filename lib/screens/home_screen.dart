@@ -55,11 +55,22 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _matchDialog(update: false);
-        },
-        child: Icon(Icons.add),
+      floatingActionButton: Row(
+        mainAxisAlignment: .spaceAround,
+        children: [
+          FloatingActionButton(
+            onPressed: () {
+              _matchDialog(update: false);
+            },
+            child: Icon(Icons.add),
+          ),
+          FloatingActionButton(
+            onPressed: () {
+              throw Exception();
+            },
+            child: Icon(Icons.bug_report_outlined),
+          ),
+        ],
       ),
       body: StreamBuilder(
         stream: _firestore.collection("football").snapshots(),
