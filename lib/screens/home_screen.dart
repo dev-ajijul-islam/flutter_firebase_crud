@@ -76,7 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           FloatingActionButton(
             onPressed: () {
-              FirebaseAnalytics.instance.logEvent(name: "Thrown error");
+              FirebaseAnalytics.instance.logEvent(name: "Thrown_error");
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text("Exception thrown for crashlytics test"),

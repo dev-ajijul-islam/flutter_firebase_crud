@@ -1,4 +1,5 @@
 import 'package:firebase_crud_practice/screens/home_screen.dart';
+import 'package:firebase_crud_practice/screens/sign_up_screen.dart';
 import 'package:flutter/material.dart';
 
 class FirebaseCrud extends StatefulWidget {
@@ -40,7 +41,7 @@ class _FirebaseCrudState extends State<FirebaseCrud> {
         ),
       ),
       debugShowCheckedModeBanner: false,
-      home: HomeScreen(onThemeChanged: () => setState(() {})),
+      home: SignUpScreen(),
     );
   }
 }
