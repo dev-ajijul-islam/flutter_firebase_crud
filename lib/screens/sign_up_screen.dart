@@ -1,3 +1,5 @@
+import 'package:firebase_crud_practice/screens/sign_in_screen.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -74,10 +76,30 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       Size(double.maxFinite, 50),
                     ),
                   ),
-                  onPressed: () {
-
-                  },
+                  onPressed: () {},
                   child: Text("Sign Up"),
+                ),
+                SizedBox(height: 10),
+                RichText(
+                  text: TextSpan(
+                    text: "Already have n account ?",
+                    style: .new(color: Colors.black),
+                    children: [
+                      TextSpan(
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => SignInScreen(),
+                              ),
+                            );
+                          },
+                        text: "Sign In",
+                        style: TextStyle(color: Colors.blueAccent),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
