@@ -1,4 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crud_practice/screens/home_screen.dart';
+import 'package:firebase_crud_practice/screens/sign_in_screen.dart';
 import 'package:firebase_crud_practice/screens/sign_up_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -41,11 +43,11 @@ class _FirebaseCrudState extends State<FirebaseCrud> {
         ),
       ),
       debugShowCheckedModeBanner: false,
-      home: HomeScreen(
+      home: FirebaseAuth.instance.currentUser != null ?  HomeScreen(
         onThemeChanged: () {
           setState(() {});
         },
-      ),
+      ) : SignInScreen(),
     );
   }
 }

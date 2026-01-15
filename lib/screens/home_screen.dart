@@ -5,7 +5,6 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_crud_practice/app.dart';
 import 'package:firebase_crud_practice/data/models/match_model.dart';
 import 'package:firebase_crud_practice/screens/sign_in_screen.dart';
-import 'package:firebase_crud_practice/services/auth_service.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -98,6 +97,17 @@ class _HomeScreenState extends State<HomeScreen> {
             activeTrackColor: Colors.greenAccent,
             inactiveTrackColor: Colors.black,
             inactiveThumbColor: Colors.greenAccent,
+          ),
+          IconButton(
+            onPressed: () {
+              FirebaseAuth.instance.signOut();
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => SignInScreen()),
+                (route) => false,
+              );
+            },
+            icon: Icon(Icons.logout),
           ),
         ],
       ),
