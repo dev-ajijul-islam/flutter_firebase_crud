@@ -179,9 +179,6 @@ class _HomeScreenState extends State<HomeScreen> {
           if (asyncSnapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
           }
-          if (asyncSnapshot.hasError) {
-            Center(child: Text(asyncSnapshot.error.toString()));
-          }
           if (asyncSnapshot.hasData) {
             return Column(
               children: [
@@ -193,7 +190,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 Expanded(
                   child: ListView.separated(
-                    padding: .all(20),
+                    padding: .symmetric(horizontal: 20),
                     itemBuilder: (context, index) {
                       final match = MatchModel.fromJson({
                         "id": asyncSnapshot.data?.docs[index].id,
@@ -479,6 +476,8 @@ class _HomeScreenState extends State<HomeScreen> {
               _team2Controller.clear();
               _team1ScoreController.clear();
               _team2ScoreController.clear();
+
+              Navigator.pop(context);
             } catch (e) {
               debugPrint("Create match failed");
             } finally {
